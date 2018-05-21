@@ -1,4 +1,4 @@
-    void TraversalTree(Tree tree) {//»Î’ª¡Ω¥Œ
+    void TraversalTree(Tree tree) {
         Stack stack = CreateNewStack();
         Tree T = tree;
         while (T || !isEmpty(stack)) {
