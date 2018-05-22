@@ -1,137 +1,228 @@
-//抱歉，能力不足
+//真心不知道为啥测试点1不通过
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
+//Huffman编码（不唯一）是最优编码，但最优编码不一定是Huffman编码
 
+//WPL最小，无歧义（前缀码）
 typedef struct HuffmanTreeNode
 {
     int weight;
     struct HuffmanTreeNode *left,*right;
 }*HuffmanTree;
 
-
-int sizeheap=0;
-int heap[64];
-
-
-int Delete(int c[])
+typedef struct HeapNode
 {
-    if(sizeheap<1)
-        return 0;
+    HuffmanTree * Data;//储存HuffmanTreeNode.weight数组
+    int sizeheap;//当前大小
+    int capacity;//容量
+}*MinHeap;
 
-    int x=c[1];
-    c[1]=c[sizeheap];
-    sizeheap--;
-    if(sizeheap==0)return x;
+typedef struct BinTreeNode
+{
+    int flag;
+    struct BinTreeNode *left,*right;
+}*BinTree;
 
-    int parent,child;
-    int x1=c[1];
-    for(parent=1;parent*2<=sizeheap;parent=child)
+HuffmanTree Huffman(MinHeap H);
+int WPL(HuffmanTree T,int depth);
+HuffmanTree Delete(MinHeap H);
+void Insert(MinHeap H,HuffmanTree HT);
+//int check(char *c,int n,int *f,int t);
+int checktree(char *s,BinTree T);
+
+int main()
+{
+
+    int n,i;
+
+    MinHeap H=(MinHeap)malloc(sizeof(struct HeapNode));
+    HuffmanTree HT;
+
+    scanf("%d\n",&n);
+    H->Data=(HuffmanTree*)malloc(64*sizeof(struct HuffmanTreeNode));
+    H->Data[0]=(HuffmanTree)malloc(sizeof(struct HuffmanTreeNode));
+    H->Data[0]->weight=-1;
+    H->sizeheap=0;
+    H->capacity=n+1;
+
+    char *c=(char *)malloc((n+1)*sizeof(char));
+    int f[64];
+    for(i=1;i<=n;i++)
     {
-        child=parent*2;
-        if((parent!=sizeheap)&&(c[child]>c[child+1]))
-            child++;
-        if(x1<=c[child])break;
+        HT=(HuffmanTree)malloc(sizeof(struct HuffmanTreeNode));
+        HT->left=HT->right=NULL;
+        if(i==n)
+        {
+            scanf("%c %d",&c[i],&(HT->weight));
+            f[i]=HT->weight;
+        }
         else
-            c[parent]=c[child];
+        {
+            scanf("%c %d ",&c[i],&(HT->weight));
+            f[i]=HT->weight;
+        }
+
+        Insert(H,HT);
     }
-    c[parent]=x1;
 
-    return x;
-}
+    HuffmanTree T=Huffman(H);
+    int wpl=WPL(T,0);
 
-void PrecDown(int c[],int i)
-{
-    int parent,child;
-    int x=c[i];
-    for(parent=i;parent*2<=sizeheap;parent=child)
+    int t;
+    scanf("%d\n",&t);
+
+    char c1;
+    char e[n-1];
+    int result=0;
+    for(i=0;i<t;i++)
     {
-        child=parent*2;
-        if((child!=sizeheap)&&(c[child]>c[child+1]))
-            child++;
-        if(x<=c[child])break;
+        char d[n+1];
+        for(int i=1;i<=n;i++)
+        {
+            d[i]=c[i];
+        }
+        int coun=0;int flag=0;
+        BinTree BT=(BinTree)malloc(sizeof(struct BinTreeNode));
+        BT->left=BT->right=NULL;
+        BT->flag=0;
+        for(int k=0;k<n;k++)
+        {
+            scanf("%c",&c1);
+            scanf("%s",e);
+            getchar();
+
+            for(int j=1;j<=n;j++)
+            {
+                if(d[j]==c1)
+                {
+                    coun+=strlen(e)*f[j];
+                    d[j]='+';
+                    break;
+                }
+
+                if(j==n)
+                {
+                    result=0;
+                    flag=1;
+                }
+            }
+            if(!flag)
+            {
+                result=checktree(e,BT);
+                if (!result)
+                {
+                    flag=1;
+                }
+            }
+        }
+        free(BT);
+        if(result&&(coun==wpl))
+        {
+            printf("Yes\n");
+        }
         else
-            c[parent]=c[child];
+        {
+            printf("No\n");
+        }
     }
-    c[parent]=x;
+
+    return 0;
 }
 
-void buildheap(int c[])//create empty min heap
+void Insert(MinHeap H,HuffmanTree HT)
 {
-    for(int i=sizeheap/2;i>0;i--)
+    int i=++H->sizeheap;
+    if(H->sizeheap==H->capacity)return;
+    for(;H->Data[i/2]->weight>HT->weight;i/=2)
     {
-        PrecDown(c,i);
+        H->Data[i]=H->Data[i/2];
     }
+    H->Data[i]=HT;
 }
 
-void insertheap(int c[],int x)
+HuffmanTree Huffman(MinHeap H)
 {
-    int i=++sizeheap;
-    for(;c[i/2]>x;i/=2)
-    {
-        c[i]=c[i/2];
-    }
-    c[i]=x;
-}
-
-HuffmanTree Huffman(int c[])
-{
-    int i;
-    buildheap(c);
     HuffmanTree T;
-    int n=sizeheap;
-    for(i=0;i<n-1;i++)
+    int n=H->sizeheap;
+    for(int i=0;i<n-1;i++)
     {
         T=(HuffmanTree)malloc(sizeof(struct HuffmanTreeNode));
-        T->left->weight=Delete(c);
-        T->right->weight=Delete(c);
+        T->left=Delete(H);
+        T->right=Delete(H);
         T->weight=T->left->weight+T->right->weight;
-        insertheap(c,T->weight);
+        Insert(H,T);
     }
-    //sizeheap=n;
+    T=Delete(H);
+    return T;
+}
+
+HuffmanTree Delete(MinHeap H)
+{
+    HuffmanTree T;
+    T=H->Data[1];
+    HuffmanTree T1=H->Data[H->sizeheap];
+
+    H->Data[1]=H->Data[H->sizeheap];
+    H->sizeheap--;
+    int parent,child;
+    for(parent=1;parent*2<=H->sizeheap;parent=child)
+    {
+        child=parent*2;
+        if((child!=H->sizeheap)&&(H->Data[child]>H->Data[child+1]))
+            child++;
+        if(H->Data[child]->weight<T1->weight)
+            H->Data[parent]=H->Data[child];
+        else
+            break;
+    }
+    H->Data[parent]=T1;
     return T;
 }
 
 int WPL(HuffmanTree T,int depth)
 {
     if(!T->left&&!T->right)
-        return(depth*T->weight);
+        return T->weight*depth;
     else
-        return(WPL(T->left,depth+1)+WPL(T->right,depth+1));
+        return WPL(T->left,depth+1)+WPL(T->right,depth+1);
 }
 
-void check(int n)
+int checktree(char *s,BinTree T)
 {
-
-}
-
-int main()
-{
-    heap[0]=-1;
-    int n,i;
-    scanf("%d\n",&n);
-    sizeheap=n+1;
-
-    char *c=(char *)malloc((n+1)*sizeof(char));
-    //int *f=(int *)malloc(n*sizeof(int));
-    for(i=1;i<=n;i++)
+    int k;
+    for(k=0;k<strlen(s);k++)
     {
-        if(i==n)
-            scanf("%c %d",&c[i],&heap[i]);
+        if(s[k]=='0')
+        {
+            if(!T->left)
+            {
+                BinTree T1=(BinTree)malloc(sizeof(struct BinTreeNode));
+                T1->left=T1->right=NULL;
+                T1->flag=0;
+                T->left=T1;
+            }
+            else if(T->left->flag==1)
+                return 0;
+            T=T->left;
+        }
         else
-            scanf("%c %d ",&c[i],&heap[i]);
-        //getchar();
+        {
+            if(!T->right)
+            {
+                BinTree T1=(BinTree)malloc(sizeof(struct BinTreeNode));
+                T1->left=T1->right=NULL;
+                T1->flag=0;
+                T->right=T1;
+            }
+            else if(T->right->flag==1)
+                return 0;
+            T=T->right;
+        }
     }
-
-    HuffmanTree T=Huffman(heap);
-    int wpl=WPL(T,0);
-
-    printf("%d",wpl);
-
-    int t=n;
-    scanf("%d",&n);
-    for(i=0;i<n;i++)
-    {
-        check(t);
-    }
-    return 0;
+    T->flag=1;
+    if(T->left||T->right)
+        return 0;
+    else
+        return 1;
 }
