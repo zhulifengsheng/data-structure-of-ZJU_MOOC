@@ -15,7 +15,7 @@ typedef struct HeapNode
 {
     HuffmanTree * Data;//储存HuffmanTreeNode.weight数组
     int sizeheap;//当前大小
-    int capacity;//容量
+    //int capacity;//容量
 }*MinHeap;
 
 typedef struct BinTreeNode
@@ -44,7 +44,7 @@ int main()
     H->Data[0]=(HuffmanTree)malloc(sizeof(struct HuffmanTreeNode));
     H->Data[0]->weight=-1;
     H->sizeheap=0;
-    H->capacity=n+1;
+    //H->capacity=n+1;
 
     char *c=(char *)malloc((n+1)*sizeof(char));
     int f[64];
@@ -133,7 +133,7 @@ int main()
 void Insert(MinHeap H,HuffmanTree HT)
 {
     int i=++H->sizeheap;
-    if(H->sizeheap==H->capacity)return;
+    //if(H->sizeheap==H->capacity)return;
     for(;H->Data[i/2]->weight>HT->weight;i/=2)
     {
         H->Data[i]=H->Data[i/2];
@@ -165,6 +165,7 @@ HuffmanTree Delete(MinHeap H)
 
     H->Data[1]=H->Data[H->sizeheap];
     H->sizeheap--;
+
     int parent,child;
     for(parent=1;parent*2<=H->sizeheap;parent=child)
     {
